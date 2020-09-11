@@ -25,6 +25,7 @@ import (
 	"github.com/filecoin-project/lotus/chain/types"
 )
 
+var ForceChangeDI = -1
 var errNoPartitions = errors.New("no partitions")
 
 func (s *WindowPoStScheduler) failPost(deadline *miner.DeadlineInfo) {
@@ -53,6 +54,8 @@ func (s *WindowPoStScheduler) doPost(ctx context.Context, deadline *miner.Deadli
 		case errNoPartitions:
 			return
 		case nil:
+			log.Info("windows post success")
+			return
 			if err := s.submitPost(ctx, proof); err != nil {
 				log.Errorf("submitPost failed: %+v", err)
 				s.failPost(deadline)
@@ -324,6 +327,11 @@ func (s *WindowPoStScheduler) runPost(ctx context.Context, di miner.DeadlineInfo
 		return nil, xerrors.Errorf("failed to get chain randomness for windowPost (ts=%d; deadline=%d): %w", ts.Height(), di, err)
 	}
 
+	if ForceChangeDI >= 0 {
+		log.Infof("change di index to %d", ForceChangeDI)
+		di.Index = uint64(ForceChangeDI)
+	}
+
 	partitions, err := s.api.StateMinerPartitions(ctx, s.actor, di.Index, ts.Key())
 	if err != nil {
 		return nil, xerrors.Errorf("getting partitions: %w", err)
@@ -339,9 +347,12 @@ func (s *WindowPoStScheduler) runPost(ctx context.Context, di miner.DeadlineInfo
 	sidToPart := map[abi.SectorNumber]uint64{}
 	skipCount := uint64(0)
 
+	log.Info("Partition count:", len(partitions))
+
 	for partIdx, partition := range partitions {
 		// TODO: Can do this in parallel
-		toProve, err := partition.ActiveSectors()
+		//toProve, err := partition.ActiveSectors()
+		toProve, err := partition.LiveSectors()
 		if err != nil {
 			return nil, xerrors.Errorf("getting active sectors: %w", err)
 		}
@@ -390,6 +401,7 @@ func (s *WindowPoStScheduler) runPost(ctx context.Context, di miner.DeadlineInfo
 
 	if len(sinfos) == 0 {
 		// nothing to prove..
+		log.Error("nothing to prove")
 		return nil, errNoPartitions
 	}
 

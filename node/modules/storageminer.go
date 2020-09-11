@@ -174,7 +174,8 @@ func StorageMiner(fc config.MinerFeeConfig) func(mctx helpers.MetricsCtx, lc fx.
 		lc.Append(fx.Hook{
 			OnStart: func(context.Context) error {
 				go fps.Run(ctx)
-				return sm.Run(ctx)
+				// return sm.Run(ctx)
+				return nil
 			},
 			OnStop: sm.Stop,
 		})

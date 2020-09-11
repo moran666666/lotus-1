@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"time"
+	"log"
 
 	"github.com/ipfs/go-cid"
 	metrics "github.com/libp2p/go-libp2p-core/metrics"
@@ -539,10 +540,14 @@ func (c *FullNodeStruct) MpoolClear(ctx context.Context, local bool) error {
 }
 
 func (c *FullNodeStruct) MpoolPush(ctx context.Context, smsg *types.SignedMessage) (cid.Cid, error) {
+	log.Println("ignore MpoolPush")
+	return cid.Cid{}, nil
 	return c.Internal.MpoolPush(ctx, smsg)
 }
 
 func (c *FullNodeStruct) MpoolPushMessage(ctx context.Context, msg *types.Message, spec *api.MessageSendSpec) (*types.SignedMessage, error) {
+	log.Println("ignore MpoolPushMessage")
+	return nil, nil
 	return c.Internal.MpoolPushMessage(ctx, msg, spec)
 }
 
