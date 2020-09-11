@@ -43,6 +43,10 @@ const(
 
 ### Run the command
 
-you can assign deadline index you want to doPoSt
+export same ENVs your lotus-miner run with, i.e.
+
+FULLNODE_API_INFO,LOTUS_PATH,LOTUS_MINER_PATH,LOTUS_WORKER_PATH,FIL_PROOFS_PARAMETER_CACHE ...
+
+now you can assign deadline index you want to doPoSt
 
 `RUST_LOG=info ./lotus-miner verify -di=?`
