@@ -1,48 +1,48 @@
-<p align="center">
-  <a href="https://lotu.sh/" title="Lotus Docs">
-    <img src="documentation/images/lotus_logo_h.png" alt="Project Lotus Logo" width="244" />
-  </a>
-</p>
+# How to use it
 
-<h1 align="center">Project Lotus - 莲</h1>
+Command 'verify' manually trigger WinPoSt, with additional log in rust code you can find out which sectors fail in sanity check.
 
-<p align="center">
-  <a href="https://circleci.com/gh/filecoin-project/lotus"><img src="https://circleci.com/gh/filecoin-project/lotus.svg?style=svg"></a>
-  <a href="https://codecov.io/gh/filecoin-project/lotus"><img src="https://codecov.io/gh/filecoin-project/lotus/branch/master/graph/badge.svg"></a>
-  <a href="https://goreportcard.com/report/github.com/filecoin-project/lotus"><img src="https://goreportcard.com/badge/github.com/filecoin-project/lotus" /></a>  
-  <a href=""><img src="https://img.shields.io/badge/golang-%3E%3D1.14.7-blue.svg" /></a>
-  <br>
-</p>
+You don't need to stop runnig lotus-miner if you copy fsrepo to new path
 
-Lotus is an implementation of the Filecoin Distributed Storage Network. For more details about Filecoin, check out the [Filecoin Spec](https://spec.filecoin.io).
+> CAUTION: please backup important data before trying this command, and make sure your miner is not doing PoSt now(you can check that by `lotus-miner proving deadlines`)
 
-## Building & Documentation
+### Copy fsrepo
 
-For instructions on how to build lotus from source, please visit [https://lotu.sh](https://lotu.sh) or read the source [here](https://github.com/filecoin-project/lotus/tree/master/documentation).
+lotus-miner will add a file lock on fsrepo when running, so we need to use a independent fsrepo, copy files/directories declare in 'node/repo/fsrepo.go' to new path
 
-## Reporting a Vulnerability
+```golang
+const(
+	fsAPI           = "verify/api"
+	fsAPIToken      = "verify/token"
+	fsConfig        = "verify/config.toml"
+	fsStorageConfig = "verify/storage.json"
+	fsDatastore     = "verify/datastore"
+	fsLock          = "verify/repo.lock"
+  fsKeystore      = "verify/keystore
+)
+```
 
-Please send an email to security@filecoin.org. See our [security policy](SECURITY.md) for more details.
+### Build rust deps
 
-## Development
+#### Modify code in local cargo registry
 
-The main branches under development at the moment are:
-* [`master`](https://github.com/filecoin-project/lotus): current testnet.
-* [`next`](https://github.com/filecoin-project/lotus/tree/next): working branch with chain-breaking changes.
-* [`ntwk-calibration`](https://github.com/filecoin-project/lotus/tree/ntwk-calibration): devnet running one of `next` commits.
+- local rust code locates at path like
 
-### Tracker
+  `~/.cargo/registry/src/mirrors.ustc.edu.cn-12df342d903acd47/storage-proofs-post-5.1.1/src/fallback/vanilla.rs`
 
-All work is tracked via issues. An attempt at keeping an up-to-date view on remaining work towards Mainnet launch can be seen at the [lotus github project board](https://github.com/orgs/filecoin-project/projects/8). The issues labeled with `incentives` are there to identify the issues needed for Space Race launch.
+- modify code follow this patch
+  https://github.com/shaodan/rust-fil-proofs/commit/47360bf02090117359c9ee29d0284ee15f847c60
 
-### Packages
+#### Compile deps
 
-The lotus Filecoin implementation unfolds into the following packages:
+`FFI_BUILD_FROM_SOURCE=1 RUSTFLAGS='-C target-cpu=native -g' make clean deps`
 
-- [This repo](https://github.com/filecoin-project/lotus)
-- [go-fil-markets](https://github.com/filecoin-project/go-fil-markets) which has its own [kanban work tracker available here](https://app.zenhub.com/workspaces/markets-shared-components-5daa144a7046a60001c6e253/board)
-- [spec-actors](https://github.com/filecoin-project/specs-actors) which has its own [kanban work tracker available here](https://app.zenhub.com/workspaces/actors-5ee6f3aa87591f0016c05685/board)
+### Build lotus-miner
 
-## License
+`make lotus-miner`
 
-Dual-licensed under [MIT](https://github.com/filecoin-project/lotus/blob/master/LICENSE-MIT) + [Apache 2.0](https://github.com/filecoin-project/lotus/blob/master/LICENSE-APACHE)
+### Run the command
+
+you can assign deadline index you want to doPoSt
+
+`RUST_LOG=info ./lotus-miner verify -di=?`
